@@ -4,6 +4,7 @@
 #include <random>
 #include <vector>
 #include <string>
+#include <set>
 #include "decisionTree.h"
 
 using std::vector;
@@ -17,6 +18,19 @@ vector<vector<int>> get_random_samples(const vector<vector<int>> &samples,
     // Intoarce un vector de marime num_to_return cu elemente random,
     // diferite din samples
     vector<vector<int>> ret;
+
+    int size = samples.size();
+    mt19937 mt;
+    std::set<int> rows;
+
+    while (rows.size() != num_to_return) {
+        rows.insert(mt() % size);
+    }
+
+    for (std::set<int>::iterator it = rows.begin(); it != rows.end(); ++it) {
+        ret.push_back(samples[*it]);
+    }
+
     return ret;
 }
 
