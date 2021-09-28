@@ -20,7 +20,8 @@ vector<vector<int>> get_random_samples(const vector<vector<int>> &samples,
     vector<vector<int>> ret;
 
     int size = samples.size();
-    mt19937 mt;
+    std::random_device rd;
+    mt19937 mt(rd());
     std::set<int> rows;
 
     while (rows.size() != num_to_return) {
@@ -61,5 +62,19 @@ int RandomForest::predict(const vector<int> &image) {
     // Va intoarce cea mai probabila prezicere pentru testul din argument
     // se va interoga fiecare Tree si se va considera raspunsul final ca
     // fiind cel majoritar
-    return 0;
+    int freq[10] = {0};
+    for (int i = 0; i < num_trees; i++) {
+        freq[trees[i].predict(image)]++;
+    }
+
+    int result = 0;
+    int max_freq = freq[0];
+    for (int i = 1; i < num_trees; i++) {
+        if (max_freq < freq[i]) {
+            max_freq = freq[i];
+            result = i;
+        }
+    }
+    
+    return result;
 }

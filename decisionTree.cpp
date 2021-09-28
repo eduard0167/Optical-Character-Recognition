@@ -48,21 +48,18 @@ void Node::make_leaf(const vector<vector<int>> &samples,
     if (is_single_class) {
         result = samples[0][0];
     } else {
-        std::map<int,int> freq;
+        int freq[10] = {0};
         int size = samples.size();
 
         for (int i = 0; i < size; i++) {
-            if (freq.find(samples[i][0]) == freq.end()) {
-                freq[samples[i][0]] = 1;
-            } else {
-                freq[samples[i][0]]++;
-            }
+            freq[samples[i][0]]++;
         }
 
-        int max = 0, value = 0;;
-        for (std::map<int,int>::iterator it = freq.begin(); it != freq.end(); ++it) {
-            if (max < it->second) {
-                value = it->first;
+        int max_freq = freq[0], value = 0;;
+        for (int i = 1; i < size; i++) {
+            if (max_freq < freq[i]) {
+                value = i;
+                max_freq = freq[i];
             }
         }
 
@@ -72,34 +69,100 @@ void Node::make_leaf(const vector<vector<int>> &samples,
 
 pair<int, int> find_best_split(const vector<vector<int>> &samples,
                                const vector<int> &dimensions) {
-    // TODO(you)
     // Intoarce cea mai buna dimensiune si valoare de split dintre testele
     // primite. Prin cel mai bun split (dimensiune si valoare)
     // ne referim la split-ul care maximizeaza IG
     // pair-ul intors este format din (split_index, split_value)
-
     int splitIndex = -1, splitValue = -1;
+    int size = samples.size();
+    int nr_col = dimensions.size();
+    float maxIG = -1;
+
+    float parentEntropy = get_entropy(samples);
+
+    for (int i = 0; i < nr_col; i++) {
+        vector<int> test_values = compute_unique(samples, dimensions[i]);
+        // nr_values = numarul de valori pentru care se va calcula IG
+        int nr_values = test_values.size();
+
+        for (int j = 0; j < nr_values; j++) {
+            pair<vector<int>, vector<int>> split_indexes = get_split_as_indexes
+                                    (samples, dimensions[i], test_values[j]);
+
+            // Daca split-ul nu formeaza copil stang sau drept (nu este split
+            // bun) se renunta la acest split.
+            if (split_indexes.first.size() == 0 ||
+                                split_indexes.second.size() == 0) {
+                continue;
+            }
+
+            // Se calculeaza Information Gain pentru split-ul curent.
+            float IG = parentEntropy - (split_indexes.first.size() *
+                        get_entropy_by_indexes(samples, split_indexes.first) +
+                        split_indexes.second.size() *
+                        get_entropy_by_indexes(samples, split_indexes.second)) /
+                        size;
+
+            if (IG > maxIG) {
+                maxIG = IG;
+                splitIndex = dimensions[i];
+                splitValue = test_values[j];
+            }
+        }
+    }
+
     return pair<int, int>(splitIndex, splitValue);
 }
 
 void Node::train(const vector<vector<int>> &samples) {
-    // TODO(you)
     // Antreneaza nodul curent si copii sai, daca e nevoie
     // 1) verifica daca toate testele primite au aceeasi clasa (raspuns)
     // Daca da, acest nod devine frunza, altfel continua algoritmul.
     // 2) Daca nu exista niciun split valid, acest nod devine frunza. Altfel,
     // ia cel mai bun split si continua recursiv
+    int size = samples.size();
+
+    if (same_class(samples)) {
+        make_leaf(samples, true);
+    } else {
+        // best_split = indexul si valoarea celui mai bun split. Vectorul de
+        // dimensiuni format pentru calcularea lui best_split contine elemente
+        // random intre 0 si numarul de coloane din samples (785 pentru noi).
+        pair<int, int> best_split = find_best_split(samples,
+                                        random_dimensions(samples[0].size()));
+
+        // Daca nu exista niciun split valid, nodul devine frunza.
+        if (best_split.first == -1 || best_split.second == -1) {
+            make_leaf(samples, false);
+        } else {
+            // Daca exista un split valid, nodul curent devine nod de decizie.
+            make_decision_node(best_split.first, best_split.second);
+
+            // Se calculeaza cele doua subseturi obtinute in urma split-ului.
+            pair<vector<vector<int>>, vector<vector<int>>> split_sets =
+                                    split(samples, split_index, split_value);
+            // Formarea arborelui continua recursiv cu cei doi subarbori.
+            left = make_shared<Node> (Node());
+            left->train(split_sets.first);
+
+            right = make_shared<Node> (Node());
+            right->train(split_sets.second);
+        }
+    }
 }
+
 
 int Node::predict(const vector<int> &image) const {
     // TODO(you)
     // Intoarce rezultatul prezis de catre decision tree
-    while (true) {
-        if (image[split_index] <= split_value) {
-            return left->result;
-        } else {
-            return right->result;
-        }
+    if (is_leaf) {
+        return result;
+    }
+
+    if (image[split_index - 1] <= split_value) {
+        return left->predict(image);
+    } else {
+        return right->predict(image);
     }
 }
 
@@ -140,25 +203,23 @@ float get_entropy_by_indexes(const vector<vector<int>> &samples,
     // Cu conditia ca subsetul sa contina testele ale caror indecsi se gasesc in
     // vectorul index (Se considera doar liniile din vectorul index)
 
-    float entropy = 0;
-    int totalTests = samples.size();
+    vector<float> freq(10, 0.0f);
+    int size = index.size();
+    float entropy = 0.0f;
 
-    for (int i : index) {
-        float count = 0;
-        for (int j = 0; j < totalTests; j++) {
-            if (samples[j][i] == i) {
-                count++;
-            }
-        }
-        if (count == 0 || count == totalTests) {
-            continue;
-        }
-
-        float probY = count / totalTests;
-        float probN = (totalTests - count) / totalTests;
-
-        entropy += probY * log2(probY) + probN * log2(probN);
+    // Se calculeaza numarul de aparitii al fiecarei cifre, apoi se calculeaza
+    // entropia.
+    for (int i = 0; i < size; i++) {
+        freq[samples[index[i]][0]]++;
     }
+
+    for (int i = 0; i < 10; i++) {
+        freq[i] /= size;
+
+        if (freq[i] > 0.0f)
+            entropy += freq[i] * log2(freq[i]);
+    }
+
     return -entropy;
 }
 
@@ -224,10 +285,14 @@ vector<int> random_dimensions(const int size) {
     rez.reserve(squareRoot);
 
     std::set<int> values;
-    mt19937 mt;
+    std::random_device rd;
+    mt19937 mt(rd());
 
     while (values.size() != squareRoot) {
-        values.insert(mt() % (size - 1) + 1);
+        int res = mt() % size;
+        if (res > 0) {
+            values.insert(res);
+        }
     }
 
     for (std::set<int>::iterator it = values.begin(); it != values.end(); ++it) {
