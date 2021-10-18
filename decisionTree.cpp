@@ -1,5 +1,3 @@
-// copyright Luca Istrate, Andrei Medar
-
 #include "./decisionTree.h"  // NOLINT(build/include)
 #include <algorithm>
 #include <cassert>
