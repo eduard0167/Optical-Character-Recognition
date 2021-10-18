@@ -1,4 +1,3 @@
-// copyright Luca Istrate, Andrei Medar
 #include "randomForest.h"
 #include <iostream>
 #include <random>
