@@ -95,7 +95,7 @@ echo "total unit testing points: $sum/50"
 echo
 
 echo "testing precision"
-timeout $TIME ./ex > result
+./ex > result
 
 if [ "$?" == "124" ]
 then

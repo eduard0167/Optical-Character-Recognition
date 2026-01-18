@@ -13,9 +13,8 @@ using std::mt19937;
 
 vector<vector<int>> get_random_samples(const vector<vector<int>> &samples,
                                        int num_to_return) {
-    // TODO(you)
-    // Intoarce un vector de marime num_to_return cu elemente random,
-    // diferite din samples
+    // Returns a vector of size num_to_return with random, unique elements
+    // from samples
     vector<vector<int>> ret;
 
     int size = samples.size();
@@ -38,29 +37,28 @@ RandomForest::RandomForest(int num_trees, const vector<vector<int>> &samples)
     : num_trees(num_trees), images(samples) {}
 
 void RandomForest::build() {
-    // Aloca pentru fiecare Tree cate n / num_trees
-    // Unde n e numarul total de teste de training
-    // Apoi antreneaza fiecare tree cu testele alese
+    // Allocates n / num_trees for each Tree
+    // Where n is the total number of training tests
+    // Then trains each tree with the chosen tests
     assert(!images.empty());
     vector<vector<int>> random_samples;
 
     int data_size = images.size() / num_trees;
 
     for (int i = 0; i < num_trees; i++) {
-        // cout << "Creating Tree nr: " << i << endl;
+        // cout << "Creating Tree no: " << i << endl;
         random_samples = get_random_samples(images, data_size);
 
-        // Construieste un Tree nou si il antreneaza
+        // Builds a new Tree and trains it
         trees.push_back(Node());
         trees[trees.size() - 1].train(random_samples);
     }
 }
 
 int RandomForest::predict(const vector<int> &image) {
-    // TODO(you)
-    // Va intoarce cea mai probabila prezicere pentru testul din argument
-    // se va interoga fiecare Tree si se va considera raspunsul final ca
-    // fiind cel majoritar
+    // Returns the most probable prediction for the test in the argument
+    // each Tree will be queried and the final answer will be considered
+    // the majority one
     int freq[10] = {0};
     for (int i = 0; i < num_trees; i++) {
         freq[trees[i].predict(image)]++;

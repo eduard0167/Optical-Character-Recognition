@@ -37,7 +37,7 @@ pair<vector<vector<int>>, vector<vector<int>>> read() {
             l.push_back(nr);
             if (parser.peek() == ',') parser.ignore();
         }
-        train.push_back(l);
+        if (!l.empty()) train.push_back(l);
     }
 
     f.close();
@@ -48,7 +48,6 @@ pair<vector<vector<int>>, vector<vector<int>>> read() {
         exit(1);
     }
 
-    //  vector<vector<int>> test;
     while (getline(g, line)) {
         stringstream parser(line);
         l.clear();
@@ -58,7 +57,7 @@ pair<vector<vector<int>>, vector<vector<int>>> read() {
                 parser.ignore();
             }
         }
-        test.push_back(l);
+        if (!l.empty()) test.push_back(l);
     }
 
     g.close();
@@ -71,17 +70,17 @@ int main() {
 
     pair<vector<vector<int>>, vector<vector<int>>> input = read();
     vector<vector<int>> train = input.first, test = input.second;
-    // read(train, test);
 
     RandomForest forest(10, train);
     forest.build();
 
-    // cerr << "CALCULATING PRECISION\n" << flush;
+
     int correct = 0, ans;
     for (const auto &it : test) {
         vector<int> vec;
         vec.reserve(it.size());
-        copy(it.begin() + 1, it.end(), back_inserter(vec));
+        if (it.size() <= 1) continue;
+        vec.insert(vec.end(), it.begin() + 1, it.end());
         ans = forest.predict(vec);
         if (ans == it[0]) correct++;
     }

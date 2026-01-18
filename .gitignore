@@ -1,0 +1,7 @@
+mnist_train.csv
+mnist_test.csv
+*.o
+ex
+unit_testing_checker
+checkstyle.txt
+.DS_Store

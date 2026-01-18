@@ -32,10 +32,10 @@ std::vector<int> compute_unique(const std::vector<std::vector<int>> &,
 std::pair<int, int> find_best_split(const std::vector<std::vector<int>> &,
                                     const std::vector<int> &);
 
-// structura unui nod din decision tree
-// split_index = dimensiunea in functie de care se imparte
-// split_value = valoarea in functie de care se imparte
-// is_leaf si result sunt pentru cazul in care avem un nod frunza
+// Decision tree node structure
+// split_index = the dimension used for splitting
+// split_value = the value used for splitting
+// is_leaf and result are used when we have a leaf node
 class Node {
  protected:
     int split_index;
